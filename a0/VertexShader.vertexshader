@@ -1,0 +1,31 @@
+#version 330 core
+
+layout(location = 0) in vec3 vertexPosition_modelspace;
+layout(location = 1) in vec3 vertexNormal_modelspace;
+
+out vec3 vertexPosition_modelspace1;
+out vec3 cameraDirection_cameraspace;
+out vec3 lightDirection_cameraspace;
+out vec3 normalDirection_cameraspace;
+
+
+//constant values
+uniform mat4 M;
+uniform mat4 V;
+uniform mat4 P;
+uniform vec3 lightPosition_modelspace;
+
+void main(){
+  
+  gl_Position = P * V * M * vec4(vertexPosition_modelspace,1);
+
+  vertexPosition_modelspace1 = vertexPosition_modelspace; //used to get distance in fragment shader
+  vec3 vertexPosition_cameraspace = (V * M * vec4(vertexPosition_modelspace, 1)).xyz;
+  vec3 lightPosition_cameraspace = (V * M * vec4(lightPosition_modelspace, 1)).xyz;
+  vec3 cameraPosition_cameraspace = vec3(0,0,0);
+  
+  // ___Direction_cameraspace is the direction FROM the vertex TO ___
+  cameraDirection_cameraspace = cameraPosition_cameraspace - vertexPosition_cameraspace;
+  lightDirection_cameraspace = lightPosition_cameraspace - vertexPosition_cameraspace;
+  normalDirection_cameraspace = (V * M * vec4(vertexNormal_modelspace, 0)).xyz;
+}
