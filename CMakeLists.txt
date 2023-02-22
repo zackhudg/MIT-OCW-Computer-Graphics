@@ -2,22 +2,23 @@
 cmake_minimum_required (VERSION 3.0)
 project (Assignments)
 
-find_package(OpenGL REQUIRED))
-
-# Compile external dependencies 
-add_subdirectory (external/glew/)
-
-include_directories(
-	external/glfw/include/
-	external/glm/
-	external/glew0/include/
-	.
-)
+find_package(OpenGL REQUIRED)
 
 set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
-	glew
+	libglew_static
+)
+
+# Compile external dependencies 
+add_subdirectory (external/glfw)
+add_subdirectory (external/glew)
+
+include_directories(
+	external/glfw/include/
+	external/glm/
+	external/glew/include/
+	.
 )
 
 add_definitions(
