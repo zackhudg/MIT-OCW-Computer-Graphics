@@ -6,4 +6,4 @@
 	url = https://github.com/g-truc/glm
 [submodule "external/glew"]
 	path = external/glew
-	url = https://github.com/edoren/glew
+	url = https://github.com/Perlmint/glew-cmake
