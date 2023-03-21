@@ -49,3 +49,32 @@ set_target_properties(a0 PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${C
 set_target_properties(a0 PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/a0/")
 #create_target_launcher(a0 WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/a0/")
 
+# Assignment 1
+add_executable(a1
+	a1/a1.cpp
+	common/shader.cpp
+	common/shader.hpp
+	common/objloader.cpp
+	common/objloader.hpp
+	common/vboindexer.cpp
+	common/vboindexer.hpp
+	a1/VertexShader.vertexshader
+	a1/FragmentShader.fragmentshader
+	a1/camera.cpp
+	a1/curve.cpp
+	a1/parse.cpp
+	a1/surf.cpp
+	a1/camera.h
+	a1/curve.h
+	a1/parse.h
+	a1/surf.h
+	a1/extra.h
+	a1/tuple.h
+)
+target_link_libraries(a1
+	${ALL_LIBS}
+)
+set_target_properties(a1 PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/a1/")
+set_target_properties(a1 PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/a1/")
+
+

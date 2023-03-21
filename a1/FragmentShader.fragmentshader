@@ -1,0 +1,26 @@
+#version 330 core
+in vec3 lightDirection_cameraspace;
+in vec3 normalDirection_cameraspace;
+in vec3 vertexPosition_modelspace1;
+
+out vec3 color;
+
+uniform vec3 lightPosition_modelspace;
+uniform vec3 diffColor;
+
+
+void main(){
+	vec3 lightColor = vec3(1,1,1);
+	float lightPower = 50.0f;
+   
+    //diffuse
+	float distance = length(vertexPosition_modelspace1 - lightPosition_modelspace);
+	
+	vec3 n = normalize(normalDirection_cameraspace);
+	vec3 l = normalize(lightDirection_cameraspace);
+	// l unit vector: vertex to light
+	// n unit vector: vertex normal
+	float cosTheta = clamp(dot(n,l), 0, 1);
+
+	color.rgb = diffColor * lightColor * lightPower * cosTheta / (distance * distance);
+}
