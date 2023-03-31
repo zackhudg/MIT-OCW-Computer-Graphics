@@ -8,6 +8,10 @@
 #include <fstream>
 #include <vector>
 
+// Include GLEW
+#include <GL/glew.h>
+// Include GLFW
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 using namespace glm;
 
@@ -57,51 +61,41 @@ namespace
     vector<Surface> gSurfaces;
     vector<string> gSurfaceNames;
 
+    GLFWwindow* window;
+
     // Declarations of functions whose implementations occur later.
     void arcballRotation(int endX, int endY);
-    void keyboardFunc( unsigned char key, int x, int y);
+    void keyboardFunc(GLFWwindow* window, int key, int scancode, int action, int mods);
     void specialFunc( int key, int x, int y );
-    void mouseFunc(int button, int state, int x, int y);
-    void motionFunc(int x, int y);
+    void mouseFunc(GLFWwindow* window, int button, int action, int mods);
     void reshapeFunc(int w, int h);
     void drawScene(void);
     void initRendering();
     void loadObjects(int argc, char *argv[]);
     void makeDisplayLists();
+    //void motionFunc(GLFWWindow* window, double x, double y);
 
     // This function is called whenever a "Normal" key press is
     // received.
-    void keyboardFunc( unsigned char key, int x, int y )
+    void keyboardFunc(GLFWwindow* window, int key, int scancode, int action, int mods)
     {
-        switch ( key )
-        {
-        case 27: // Escape key
+        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
             exit(0);
-            break;
-        case ' ':
-        {
+        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS){
             mat4 eye = mat4(1);
             camera.SetRotation(eye);
             camera.SetCenter(vec3(0,0,0));
-            break;
         }
-        case 'c':
-        case 'C':
+        if (key == GLFW_KEY_C && action == GLFW_PRESS)
             gCurveMode = (gCurveMode+1)%3;
-            break;
-        case 's':
-        case 'S':
+        if (key == GLFW_KEY_S && action == GLFW_PRESS)
             gSurfaceMode = (gSurfaceMode+1)%3;
-            break;
-        case 'p':
-        case 'P':
+        if (key == GLFW_KEY_P && action == GLFW_PRESS)
             gPointMode = (gPointMode+1)%2;
-            break;            
-        default:
-            cout << "Unhandled key press " << key << "." << endl;        
-        }
-
-        glutPostRedisplay();
+           
+        //default:
+        //    cout << "Unhandled key press " << key << "." << endl;        
+        //}
     }
 
     // This function is called whenever a "Special" key press is
@@ -120,41 +114,29 @@ namespace
     }
 
     //  Called when mouse button is pressed.
-    void mouseFunc(int button, int state, int x, int y)
+    void mouseFunc(GLFWwindow* window, int button, int action, int mods)
     {
-        if (state == GLUT_DOWN)
-        {
-            gMousePressed = true;
-            
-            switch (button)
-            {
-            case GLUT_LEFT_BUTTON:
-                camera.MouseClick(Camera::LEFT, x, y);
-                break;
-            case GLUT_MIDDLE_BUTTON:
-                camera.MouseClick(Camera::MIDDLE, x, y);
-                break;
-            case GLUT_RIGHT_BUTTON:
-                camera.MouseClick(Camera::RIGHT, x,y);
-            default:
-                break;
-            }                       
-        }
-        else
-        {
-            camera.MouseRelease(x,y);
-            gMousePressed = false;
-        }
-        glutPostRedisplay();
+        double x, y;
+        glfwGetCursorPos(window, &x, &y);
+
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+            camera.MouseClick(Camera::LEFT, x, y);
+                
+        if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS)
+            camera.MouseClick(Camera::MIDDLE, x, y);
+                
+        if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+            camera.MouseClick(Camera::RIGHT, x, y);
+
     }
 
     // Called when mouse is moved while button pressed.
-    void motionFunc(int x, int y)
-    {
-        camera.MouseDrag(x,y);        
-    
-        glutPostRedisplay();
-    }
+    //void motionFunc(GLFWWindow* window, double x, double y)
+    //{
+    //    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+    //        //all doubles will be positive, so no need to check for negatives.
+    //        camera.MouseDrag((int) (x + 0.5 - (x < 0.0)), (int) (y + 0.5 - (x < 0.0));
+    //}
 
     // Called when the window is resized
     // w, h - width and height of the window in pixels.
@@ -183,10 +165,10 @@ namespace
         glLoadIdentity();              
 
         // Light color (RGBA)
-        GLfloat Lt0diff[] = {1.0,1.0,1.0,1.0};
-        GLfloat Lt0pos[] = {3.0,3.0,5.0,1.0};
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, Lt0diff);
-        glLightfv(GL_LIGHT0, GL_POSITION, Lt0pos);
+        vec3 lightDiffuse = vec3(1.0f, 1.0f, 1.0f);
+        vec4 lightPosition = vec4(3.0f, 3.0f, 5.0f, 1.0f); //homogeneous
+        //glLightfv(GL_LIGHT0, GL_DIFFUSE, Lt0diff);
+        //glLightfv(GL_LIGHT0, GL_POSITION, Lt0pos);
 
         camera.ApplyModelview();
 
@@ -211,8 +193,9 @@ namespace
             glCallList(gPointList);
                  
         // Dump the image to the screen.
-        glutSwapBuffers();
+        glfwSwapBuffers(window);
 
+        glfwPollEvents();
 
     }
 
@@ -430,38 +413,56 @@ int main( int argc, char* argv[] )
     // Load in from standard input
     loadObjects(argc, argv);
 
-    glutInit(&argc,argv);
+    // Initialise GLFW
+    if (!glfwInit())
+    {
+        fprintf(stderr, "Failed to initialize GLFW\n");
+        getchar();
+        return -1;
+    }
 
     // We're going to animate it, so double buffer 
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
+    // // This is a default in GLFW
+    // glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
 
     // Initial parameters for window position and size
-    glutInitWindowPosition( 60, 60 );
-    glutInitWindowSize( 600, 600 );
+    window = glfwCreateWindow(600, 600, "assignment0", NULL, NULL);
+    if (window == NULL) {
+        fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
+        getchar();
+        glfwTerminate();
+        return -1;
+    }
+
+    glfwMakeContextCurrent(window);
     
     camera.SetDimensions(600, 600);
 
     camera.SetDistance(10);
-    camera.SetCenter(Vector3f(0,0,0));
-    
-    glutCreateWindow("Assignment 1");
+    camera.SetCenter(vec3(0,0,0));
 
     // Initialize OpenGL parameters.
     initRendering();
 
     // Set up callback functions for key presses
-    glutKeyboardFunc(keyboardFunc); // Handles "normal" ascii symbols
-    glutSpecialFunc(specialFunc);   // Handles "special" keyboard keys
+    glfwSetKeyCallback(window, keyboardFunc);
+    //glutSpecialFunc(specialFunc);   // Handles "special" keyboard keys
 
     // Set up callback functions for mouse
-    glutMouseFunc(mouseFunc);
-    glutMotionFunc(motionFunc);
+    glfwSetMouseButtonCallback(window, mouseFunc);
+    //glfwSetCursorPosCallback(window, motionFunc);
+
+    glfwPollEvents();
 
     // Set up the callback function for resizing windows
-    glutReshapeFunc( reshapeFunc );
+    //glutReshapeFunc( reshapeFunc );
 
     // Call this whenever window needs redrawing
-    glutDisplayFunc( drawScene );
+    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+        glfwWindowShouldClose(window) == 0) {
+       
+        drawScene();
+    }
 
     // Trigger timerFunc every 20 msec
     //  glutTimerFunc(20, timerFunc, 0);
@@ -469,7 +470,7 @@ int main( int argc, char* argv[] )
     makeDisplayLists();
         
     // Start the main loop.  glutMainLoop never returns.
-    glutMainLoop();
+    //glutMainLoop();
 
     return 0;	// This line is never reached.
 }

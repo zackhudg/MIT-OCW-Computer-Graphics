@@ -2,12 +2,14 @@
 #include "extra.h"
 #include <GL/glu.h>
 #include <iostream>
+#include <glm/glm.hpp>
+using namespace glm;
 using namespace std;
 
 Camera::Camera()
 {
-    mStartRot = Matrix4f::identity();
-    mCurrentRot = Matrix4f::identity();
+    mStartRot = mat4(1.0f);
+    mCurrentRot = mat4(1.0f);
 }
 
 void Camera::SetDimensions(int w, int h)
@@ -30,12 +32,12 @@ void Camera::SetViewport(int x, int y, int w, int h)
     mPerspective[1] = float( w ) / h;
 }
 
-void Camera::SetCenter(const Vector3f& center)
+void Camera::SetCenter(const vec3& center)
 {
     mStartCenter = mCurrentCenter = center;
 }
 
-void Camera::SetRotation(const Matrix4f& rotation)
+void Camera::SetRotation(const mat4& rotation)
 {
     mStartRot = mCurrentRot = rotation;
 }
@@ -154,13 +156,12 @@ void Camera::ArcBallRotation(int x, int y)
 
     if( dotprod != 1 )
     {
-        Vector3f axis( sy * ez - ey * sz, sz * ex - ez * sx, sx * ey - ex * sy );
-        axis.normalize();
+        vec3 axis( sy * ez - ey * sz, sz * ex - ez * sx, sx * ey - ex * sy );
+        axis = normalize(axis);
         
         float angle = 2.0f * acos( dotprod );
 
-        mCurrentRot = Matrix4f::rotation( axis, angle );
-        mCurrentRot = mCurrentRot * mStartRot;
+        mCurrentRot = rotate(mStartRot, angle, axis);
     }
     else
     {
@@ -194,14 +195,14 @@ void Camera::PlaneTranslation(int x, int y)
     float sr = (sx - mViewport[2]/2.0f);
     float cr = (cx - mViewport[2]/2.0f);
 
-    Vector2f move(cr-sr, cu-su);
+    vec2 move(cr-sr, cu-su);
 
     // this maps move
     move *= -mCurrentDistance/d;
 
     mCurrentCenter = mStartCenter +
-        + move[0] * Vector3f(mCurrentRot(0,0),mCurrentRot(0,1),mCurrentRot(0,2))
-        + move[1] * Vector3f(mCurrentRot(1,0),mCurrentRot(1,1),mCurrentRot(1,2));
+        +move[0] * vec3(mCurrentRot[0])
+        + move[1] * vec3(mCurrentRot[1]);
 
 }
 
@@ -225,7 +226,7 @@ void Camera::ApplyModelview() const
               0.0, 1.0, 0.0);
 
     // rotate object
-    glMultMatrixf(mCurrentRot);
+    glMultMatrixf(value_ptr(mCurrentRot));
 
     //translate object to center
     glTranslatef(-mCurrentCenter[0],-mCurrentCenter[1],-mCurrentCenter[2]);    
